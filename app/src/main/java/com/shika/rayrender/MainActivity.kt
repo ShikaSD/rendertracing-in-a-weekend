@@ -3,11 +3,11 @@ package com.shika.rayrender
 import android.graphics.Bitmap
 import android.graphics.Bitmap.Config.ARGB_8888
 import android.graphics.Bitmap.createBitmap
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.renderscript.Allocation
 import android.renderscript.RenderScript
 import android.widget.ImageView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnPreDraw
 
 class MainActivity : AppCompatActivity() {
@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
 
         resultView.doOnPreDraw {
             val rs = RenderScript.create(this)
-            resultBitmap = createBitmap(resultView.measuredWidth, resultView.measuredHeight, ARGB_8888)
+            resultBitmap = createBitmap(1000, 500, ARGB_8888)
             alloc = Allocation.createFromBitmap(rs, resultBitmap)
             script = ScriptC_ray(rs)
 
@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val runnable = Runnable {
-        script.forEach_hello_world(alloc, alloc)
+        script.forEach_raytrace(alloc, alloc)
         runOnUiThread {
             resultView.setImageBitmap(resultBitmap)
         }
