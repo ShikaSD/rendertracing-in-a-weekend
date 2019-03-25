@@ -11,18 +11,29 @@ typedef struct {
     float3 direction;
 } ray;
 
-static bool hit_sphere(float3 center, float radius, const ray *r) {
+static float3 ray_at(const ray *r, float t) {
+    return r->origin + r->direction * t;
+}
+
+static float hit_sphere(float3 center, float radius, const ray *r) {
     float3 d_oc = r->origin - center;
     float a = dot(r->direction, r->direction);
     float b = 2 * dot(d_oc, r->direction);
     float c = dot(d_oc, d_oc) - radius * radius;
     float d = b * b - 4 * a * c;
-    return d >= 0;
+    if (d < 0) {
+        return -1;
+    } else {
+        return (-b - sqrt(d)) / (2 * a);
+    }
 }
 
 static float3 color(const ray *r) {
-    if (hit_sphere((float3) { 0, 0, -1}, 0.5, r)) {
-        return (float3) { 0, 0, 1 };
+    float3 center = { 0, 0, -1 };
+    float dist = hit_sphere(center, 0.5, r);
+    if (dist > 0) {
+        float3 normal = normalize(ray_at(r, dist)) - center;
+        return 0.5 * (float3) { normal.x + 1, normal.y + 1, normal.z + 1 };
     }
 
     float3 norm_direction = normalize(r->direction);
