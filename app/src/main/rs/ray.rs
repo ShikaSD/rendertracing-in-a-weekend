@@ -33,7 +33,7 @@ uchar4 RS_KERNEL raytrace(uchar4 in, rs_kernel_context context, int32_t x, int32
     int32_t width = rsGetDimX(context);
     int32_t height = rsGetDimY(context);
 
-    hitable s_h = { { { 0, 0.1, -1 }, 0.5 } };
+    hitable s_h = { { { 0, 0.2, -1 }, 0.5 } };
     hitable g_h = { { { 0, -100.5, -1 }, 100 } };
     
     hitable_t world[2] = {
@@ -54,6 +54,7 @@ uchar4 RS_KERNEL raytrace(uchar4 in, rs_kernel_context context, int32_t x, int32
     }
 
     col /= aa_factor;
+    col = half_sqrt(col);
 
     input.r = col.r;
     input.g = col.g;
