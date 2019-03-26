@@ -6,6 +6,7 @@ import android.graphics.Bitmap.createBitmap
 import android.os.Bundle
 import android.renderscript.Allocation
 import android.renderscript.RenderScript
+import android.util.Log
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnPreDraw
@@ -34,7 +35,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val runnable = Runnable {
+        val start = System.currentTimeMillis()
         script.forEach_raytrace(alloc, alloc)
+        val end = System.currentTimeMillis();
+
+        Log.d("lol", "Run script in ${end - start}")
         runOnUiThread {
             resultView.setImageBitmap(resultBitmap)
         }
