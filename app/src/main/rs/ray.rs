@@ -14,13 +14,30 @@ const static camera cam = {
     .origin = {0, 0, 0}
 };
 
-static float3 color(const ray *r, const hitable_t *world, const half depth) {
-    record* rec = NULL;
+static float3 color(const ray *r, const hitable_t *world, const half world_size, const half depth) {
+    record rec;
+    material mat;
+    bool got_hit = hit_list(world, world_size, r, &rec, &mat, 0.001, FLT_MAX);
 
-    bool got_hit = depth < 25 && hit_list(world, 2, r, &rec, 0.001, FLT_MAX);
     if (got_hit) {
-        float3 target = rec->p + rec->normal + rand_in_sphere();
-        return 0.5 * color(&(ray) { rec->p, target - rec->p }, world, depth + 1);
+        ray result;
+        float3 att;
+
+        bool scattered = false;
+        switch (mat.type) {
+            case LAMBERTIAN:
+                scattered = scatter_lambertian(&mat.value.lambertian, &rec, &att, &result);
+                break;
+            case METAL:
+                scattered = scatter_metal(&mat.value.metal, r, &rec, &att, &result);
+                break;
+        }
+
+        if (depth < 50 && scattered) {
+            return att * color(&result, world, world_size, depth + 1);
+        } else {
+            return (float3){0, 0, 0};
+        }
     }
 
     float3 norm_direction = normalize(r->direction);
@@ -32,13 +49,40 @@ uchar4 RS_KERNEL raytrace(uchar4 in, rs_kernel_context context, int32_t x, int32
     float4 input = rsUnpackColor8888(in);
     int32_t width = rsGetDimX(context);
     int32_t height = rsGetDimY(context);
-
-    hitable s_h = { { { 0, 0.2, -1 }, 0.5 } };
-    hitable g_h = { { { 0, -100.5, -1 }, 100 } };
     
-    hitable_t world[2] = {
-        { .type = obj_sphere, .value = s_h },
-        { .type = obj_sphere, .value = g_h }
+    hitable_t world[] = {
+        {
+            .type = SPHERE,
+            .value = { .sphere = { .center = { 0, 0.3, -1 }, .radius = 0.5 } },
+            .material = {
+                .type = LAMBERTIAN,
+                .value = { .lambertian = { .albedo = { 0.8, 0.3, 0.3 } } }
+            }
+        },
+        {
+            .type = SPHERE,
+            .value = { .sphere = { .center = { 0, -100.5, -1 }, .radius = 100 } },
+            .material = {
+                .type = LAMBERTIAN,
+                .value = { .lambertian = { .albedo = { 0.8, 0.8, 0 } } }
+            }
+        },
+        {
+            .type = SPHERE,
+            .value = { .sphere = { .center = { 1, 0.3, -0.9 }, .radius = 0.5 } },
+            .material = {
+                .type = METAL,
+                .value = { .metal = { .albedo = { 0.8, 0.6, 0.2 }, .fuzz = 0 } }
+            }
+        },
+        {
+            .type = SPHERE,
+            .value = { .sphere = { .center = { -1, 0.3, -0.9}, .radius = 0.5 } },
+            .material = {
+                .type = METAL,
+                .value = { .metal = { .albedo = { 0.8, 0.8, 0.8 }, .fuzz = 0 } }
+            }
+        }
     };
 
     float aa_factor = 100;
@@ -50,7 +94,7 @@ uchar4 RS_KERNEL raytrace(uchar4 in, rs_kernel_context context, int32_t x, int32
         float v = 1 - (y_f + rand()) / height;
 
         ray r = camera_ray(&cam, u, v);
-        col += color(&r, world, 0);
+        col += color(&r, world, 4, 0);
     }
 
     col /= aa_factor;

@@ -1,22 +1,21 @@
-#include<objects.rsh>
+#ifndef hitables_incl_guard
+#define hitables_incl_guard
 
-typedef struct {
-    float dist;
-    float3 p;
-    float3 normal;
-} record;
+#include<objects.rsh>
+#include<materials.rsh>
 
 typedef enum {
-    obj_sphere
-} obj;
+    SPHERE
+} obj_type;
 
 typedef union {
     sphere sphere;
 } hitable;
 
 typedef struct {
-    obj type;
+    obj_type type;
     hitable value;
+    material material;
 } hitable_t;
 
 static bool hit_sphere(const sphere *s, const ray *r, record *rec, float dist_min, float dist_max) {
@@ -41,7 +40,15 @@ static bool hit_sphere(const sphere *s, const ray *r, record *rec, float dist_mi
     return false;
 }
 
-static bool hit_list(const hitable_t *h, int hsize, const ray *r, record **rec, float dist_min, float dist_max) {
+static bool hit_list(
+    const hitable_t *h,
+    int hsize,
+    const ray *r,
+    record *rec,
+    material *mat,
+    float dist_min,
+    float dist_max
+) {
     float closest = dist_max;
     record t_rec;
     bool hit_result = false;
@@ -51,7 +58,7 @@ static bool hit_list(const hitable_t *h, int hsize, const ray *r, record **rec, 
 
         bool hit = false;
         switch (current.type) {
-            case obj_sphere:
+            case SPHERE:
                 hit = hit_sphere(&current.value.sphere, r, &t_rec, dist_min, closest);
                 break;
         }
@@ -59,9 +66,12 @@ static bool hit_list(const hitable_t *h, int hsize, const ray *r, record **rec, 
         if (hit) {
             closest = t_rec.dist;
             hit_result = true;
-            *rec = &t_rec;
+            *rec = t_rec;
+            *mat = current.material;
         }
     }
 
     return hit_result;
 }
+
+#endif

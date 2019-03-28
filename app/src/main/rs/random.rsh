@@ -1,3 +1,6 @@
+#ifndef random_incl_guard
+#define random_incl_guard true
+
 uint32_t rand_state[5] = {
     0x6635e5ce, 0x13bf026f, 0x43225b59, 0x3b0314d0, 0x670f485a
 };
@@ -28,3 +31,5 @@ static float3 rand_in_sphere() {
 
     return multiplier * (float3) { x1, x2, x3 };
 }
+
+#endif
